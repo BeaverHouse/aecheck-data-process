@@ -1,14 +1,13 @@
 package parse
 
 import (
-	"aecheck-data-process/internal/logic/common"
 	"aecheck-data-process/internal/constants"
-	"aecheck-data-process/internal/logic/data"
 	"aecheck-data-process/internal/logic"
+	"aecheck-data-process/internal/logic/common"
+	"aecheck-data-process/internal/logic/data"
 	"aecheck-data-process/internal/types"
 	"bytes"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -194,6 +193,10 @@ func GetCharacterInfo(wikiURL string) (*types.CharacterInfoFromAEWiki, error) {
 	}
 
 	characterClassTable := doc.Find("div.character-class td")
+
+	bookEndpoint := characterClassTable.Eq(7).Find("a").Eq(0).AttrOr("href", "")
+	bookLink := "https://anothereden.wiki" + bookEndpoint
+
 	className := strings.Split(strings.TrimSpace(characterClassTable.Eq(7).Text()), " ...▽ ")[0]
 	// Remove newlines and control characters
 	className = strings.Map(func(r rune) rune {
@@ -207,7 +210,7 @@ func GetCharacterInfo(wikiURL string) (*types.CharacterInfoFromAEWiki, error) {
 		className = strings.TrimSpace(className[:idx])
 	}
 	info.EnglishClassName = className
-	info.Dungeons, err = getDungeonsFromAEWiki(info.Style, info.IsAlter, info.EnglishClassName)
+	info.Dungeons, err = getDungeonsFromAEWiki(info.Style, info.IsAlter, bookLink)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +232,7 @@ func checkCustomManifest(manifestWeaponLink string) bool {
 	return strings.Contains(doc.Text(), "Weapon Tempering")
 }
 
-func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, englishClassName string) ([]string, error) {
+func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, bookLink string) ([]string, error) {
 	switch style {
 	case types.StyleAS:
 		return []string{"Treatise"}, nil
@@ -243,15 +246,7 @@ func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, englishClassName s
 		return []string{"Opus"}, nil
 	}
 
-	aewikiURL := fmt.Sprintf("%s%s_Tome", constants.AEWIKI_BASE_URL, englishClassName)
-
-	resp, err := http.Get(aewikiURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch wiki page: %v", err)
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := data.GetDocumentFromURL(bookLink)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %v", err)
 	}
