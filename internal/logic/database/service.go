@@ -473,55 +473,6 @@ func (s *Service) CompareDungeon(id int, info types.CharacterInfoFromAEWiki) {
 	fmt.Println()
 }
 
-// UpsertDungeon inserts or updates dungeon mappings
-func (s *Service) UpsertDungeon(id int, info types.CharacterInfoFromAEWiki, dryrun bool) {
-	if dryrun {
-		fmt.Printf("[DRYRUN] UpsertDungeon: id=%d, dungeons=%v\n", id, info.Dungeons)
-		return
-	}
-
-	ctx := context.Background()
-	characterID := fmt.Sprintf("char%04d", id)
-
-	// First, soft delete all existing mappings
-	err := s.queries.SoftDeleteDungeonMappings(ctx, characterID)
-	if err != nil {
-		panic(err)
-	}
-
-	// Insert new mappings
-	fmt.Println("Dungeons: ", info.Dungeons)
-	for _, dungeon := range info.Dungeons {
-		dungeonID, err := s.queries.GetKeyByEnglishName(ctx, dungeon)
-		if err != nil {
-			panic(err)
-		}
-
-		err = s.queries.InsertDungeonMapping(ctx, postgres.InsertDungeonMappingParams{
-			CharacterID: characterID,
-			DungeonID:   dungeonID,
-		})
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-// PurgeDeletedDungeon removes soft-deleted dungeon mappings
-func (s *Service) PurgeDeletedDungeon(id int, dryrun bool) {
-	if dryrun {
-		fmt.Printf("[DRYRUN] PurgeDeletedDungeon: id=%d\n", id)
-		return
-	}
-
-	ctx := context.Background()
-	characterID := fmt.Sprintf("char%04d", id)
-	err := s.queries.PurgeDeletedDungeonMappings(ctx, characterID)
-	if err != nil {
-		panic(err)
-	}
-}
-
 // ComparePersonality compares personality data from wiki with database JSONB
 func (s *Service) ComparePersonality(id int, info types.CharacterInfoFromAEWiki) {
 	ctx := context.Background()
@@ -590,55 +541,6 @@ func (s *Service) ComparePersonality(id int, info types.CharacterInfoFromAEWiki)
 		}
 	}
 	fmt.Println()
-}
-
-// UpsertPersonality inserts or updates personality mappings
-func (s *Service) UpsertPersonality(id int, info types.CharacterInfoFromAEWiki, dryrun bool) {
-	if dryrun {
-		fmt.Printf("[DRYRUN] UpsertPersonality: id=%d, personalities=%v\n", id, info.Personalities)
-		return
-	}
-
-	ctx := context.Background()
-	characterID := fmt.Sprintf("char%04d", id)
-
-	// First, soft delete all existing mappings
-	err := s.queries.SoftDeletePersonalityMappings(ctx, characterID)
-	if err != nil {
-		panic(err)
-	}
-
-	// Insert new mappings
-	fmt.Println("Personalities: ", info.Personalities)
-	for _, personality := range info.Personalities {
-		personalityID, err := s.queries.GetKeyByEnglishName(ctx, personality)
-		if err != nil {
-			panic(err)
-		}
-
-		err = s.queries.InsertPersonalityMapping(ctx, postgres.InsertPersonalityMappingParams{
-			CharacterID:   characterID,
-			PersonalityID: personalityID,
-		})
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-// PurgeDeletedPersonality removes soft-deleted personality mappings
-func (s *Service) PurgeDeletedPersonality(id int, dryrun bool) {
-	if dryrun {
-		fmt.Printf("[DRYRUN] PurgeDeletedPersonality: id=%d\n", id)
-		return
-	}
-
-	ctx := context.Background()
-	characterID := fmt.Sprintf("char%04d", id)
-	err := s.queries.PurgeDeletedPersonalityMappings(ctx, characterID)
-	if err != nil {
-		panic(err)
-	}
 }
 
 // CompareTranslations compares translation info with database

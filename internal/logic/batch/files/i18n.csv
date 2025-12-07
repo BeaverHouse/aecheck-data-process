@@ -16,8 +16,11 @@ ID,EnglishName,EnglishClassName,KoreanName,KoreanClassName,JapaneseName,Japanese
 146,Cetie,Agent,세티,에이전트,セティー,エージェント
 152,Hismena,Brionac,히스메나,브류나크,ヒスメナ,ブリューナク
 188,Lokido,Titan,로키드,티탄,ロキド,ティターン
+250,Guildna,Sovereign,길드너,마왕,ギルドナ,魔王
 330,Kamlanage,Steropes,캄라네쥬,스테로페스,カムラナージュ,ステロペス
+391,Senya,Izanagi,센야,이자나기,センヤ,イザナギ
 408,Necoco,Nekomata Avatar,네코코,네코마타 곤겐,ねここ,猫又権現
+419,Senya,Ame-no-Totsuka,센야,아메노토츠카,センヤ,アメノトツカ
 426,Dewey (Alter),Last Haven,빨간 외투의 화염술사,라스트 헤이븐,赤套の炎使い,ラストヘイヴン
 427,Laclair (Alter),Voleur,의협의 사냥꾼 라클레어,볼뢰르,義侠の猟人,ヴォルール
 429,Linaria,Detective,리나리아,디텍티브,リナリア,ディテクティブ
@@ -33,3 +36,8 @@ ID,EnglishName,EnglishClassName,KoreanName,KoreanClassName,JapaneseName,Japanese
 443,Mildy,Alphecca,밀디,알페카,ミルディ,アルフェッカ
 445,Clughorn,Arcturus,클러그혼,아르크투루스,クラグホーン,アークトゥルス
 446,Premaya (Alter),Naivete,은빛을 휘감은 번개술사,이그노랜스,銀織の雷使い,イグノランス
+448,Garnet,Devoted Queen,대거,순진한 여왕,ガーネット,純真なる女王
+450,Steiner,Royal Knight,슈타이너,근위 기사,スタイナー,近衛騎士
+452,Vivi,Black Mage,비비,흑마도사,ビビ,黒魔道士
+454,Zidane,Thief,지탄,도적,ジタン,盗賊
+456,Verdanta,Grand General,베르단타,그랜드 제너럴,ヴェルダンタ,グランジェネラル
