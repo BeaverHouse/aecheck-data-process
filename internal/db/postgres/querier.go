@@ -24,15 +24,11 @@ type Querier interface {
 	GetDungeonsByIDs(ctx context.Context, dollar_1 []string) ([]GetDungeonsByIDsRow, error)
 	GetFirstCharacterByCode(ctx context.Context, characterCode string) (GetFirstCharacterByCodeRow, error)
 	GetKeyByEnglishName(ctx context.Context, en string) (string, error)
-	GetPersonalityMappings(ctx context.Context, characterID string) ([]GetPersonalityMappingsRow, error)
 	GetTranslation(ctx context.Context, key string) (GetTranslationRow, error)
 	InsertBuddyWithCharacter(ctx context.Context, arg InsertBuddyWithCharacterParams) error
 	InsertBuddyWithGetPath(ctx context.Context, arg InsertBuddyWithGetPathParams) error
 	InsertCharacter(ctx context.Context, arg InsertCharacterParams) error
-	InsertPersonalityMapping(ctx context.Context, arg InsertPersonalityMappingParams) error
 	InsertTranslation(ctx context.Context, arg InsertTranslationParams) error
-	PurgeDeletedPersonalityMappings(ctx context.Context, characterID string) error
-	SoftDeletePersonalityMappings(ctx context.Context, characterID string) error
 	UpdateBuddyWithCharacter(ctx context.Context, arg UpdateBuddyWithCharacterParams) error
 	UpdateBuddyWithGetPath(ctx context.Context, arg UpdateBuddyWithGetPathParams) error
 	UpdateCharacter(ctx context.Context, arg UpdateCharacterParams) error

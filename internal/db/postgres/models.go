@@ -50,16 +50,6 @@ type AecheckDungeon struct {
 	DeletedAt pgtype.Timestamp `json:"deleted_at"`
 }
 
-type AecheckPersonalityMapping struct {
-	ID            int32            `json:"id"`
-	CharacterID   string           `json:"character_id"`
-	PersonalityID string           `json:"personality_id"`
-	Description   pgtype.Text      `json:"description"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
-	DeletedAt     pgtype.Timestamp `json:"deleted_at"`
-}
-
 type AecheckTranslation struct {
 	Key       string           `json:"key"`
 	Ko        string           `json:"ko"`
