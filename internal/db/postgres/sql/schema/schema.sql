@@ -66,18 +66,6 @@ CREATE TABLE IF NOT EXISTS aecheck.personality_mappings (
     CONSTRAINT ae_personality_map_pkey PRIMARY KEY (id)
 );
 
--- Dungeon Mappings table
-CREATE TABLE IF NOT EXISTS aecheck.dungeon_mappings (
-    id INT4 NOT NULL,
-    character_id VARCHAR(20) NOT NULL,
-    dungeon_id VARCHAR(20) NOT NULL,
-    description VARCHAR(500) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NULL,
-    deleted_at TIMESTAMP NULL,
-    CONSTRAINT ae_dungeon_map_pkey PRIMARY KEY (id)
-);
-
 -- Translations table
 CREATE TABLE IF NOT EXISTS aecheck.translations (
     key VARCHAR(50) NOT NULL,
@@ -93,7 +81,6 @@ CREATE TABLE IF NOT EXISTS aecheck.translations (
 -- Critical performance indexes only
 -- For JOIN operations (character -> personalities/dungeons/buddies)
 CREATE INDEX IF NOT EXISTS idx_personality_mappings_character_id ON aecheck.personality_mappings(character_id);
-CREATE INDEX IF NOT EXISTS idx_dungeon_mappings_character_id ON aecheck.dungeon_mappings(character_id);
 CREATE INDEX IF NOT EXISTS idx_buddies_character_id ON aecheck.buddies(character_id);
 
 -- For related character lookups (character_code and alter_character queries)

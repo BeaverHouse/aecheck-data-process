@@ -21,7 +21,6 @@ type Querier interface {
 	GetCharacterJSONBData(ctx context.Context, characterID string) (GetCharacterJSONBDataRow, error)
 	GetCharacterWithTranslation(ctx context.Context, characterID string) (GetCharacterWithTranslationRow, error)
 	GetDungeonByID(ctx context.Context, dungeonID string) (GetDungeonByIDRow, error)
-	GetDungeonMappings(ctx context.Context, characterID string) ([]GetDungeonMappingsRow, error)
 	GetDungeonsByIDs(ctx context.Context, dollar_1 []string) ([]GetDungeonsByIDsRow, error)
 	GetFirstCharacterByCode(ctx context.Context, characterCode string) (GetFirstCharacterByCodeRow, error)
 	GetKeyByEnglishName(ctx context.Context, en string) (string, error)
@@ -30,12 +29,9 @@ type Querier interface {
 	InsertBuddyWithCharacter(ctx context.Context, arg InsertBuddyWithCharacterParams) error
 	InsertBuddyWithGetPath(ctx context.Context, arg InsertBuddyWithGetPathParams) error
 	InsertCharacter(ctx context.Context, arg InsertCharacterParams) error
-	InsertDungeonMapping(ctx context.Context, arg InsertDungeonMappingParams) error
 	InsertPersonalityMapping(ctx context.Context, arg InsertPersonalityMappingParams) error
 	InsertTranslation(ctx context.Context, arg InsertTranslationParams) error
-	PurgeDeletedDungeonMappings(ctx context.Context, characterID string) error
 	PurgeDeletedPersonalityMappings(ctx context.Context, characterID string) error
-	SoftDeleteDungeonMappings(ctx context.Context, characterID string) error
 	SoftDeletePersonalityMappings(ctx context.Context, characterID string) error
 	UpdateBuddyWithCharacter(ctx context.Context, arg UpdateBuddyWithCharacterParams) error
 	UpdateBuddyWithGetPath(ctx context.Context, arg UpdateBuddyWithGetPathParams) error
