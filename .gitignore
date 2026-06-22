@@ -1,0 +1,14 @@
+.env*
+.DS_Store
+
+.vscode/
+
+# Build dependencies & artifact binaries
+dist/
+vendor/
+aecheck
+aecheck.exe
+
+# Temporary & test data
+.agent-cache/
+.agent-check-result.json
