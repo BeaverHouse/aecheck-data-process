@@ -93,3 +93,57 @@ func (s *Service) UpsertTranslation(info types.TranslationInfo, code string, dry
 		}
 	}
 }
+
+// UpsertSpoilerTranslation stores the true name under a separate key while
+// keeping the normal character translation spoiler-safe.
+func (s *Service) UpsertSpoilerTranslation(info types.TranslationInfo, code string, dryrun bool) {
+	if !logic.IsSpoilerTrueName(info.EnglishName) {
+		return
+	}
+
+	safeName := logic.ResolveForDB(info.EnglishName)
+	if !logic.IsSpoilerAlias(safeName) {
+		return
+	}
+
+	spoilerInfo := types.TranslationInfo{
+		EnglishName:  info.EnglishName,
+		KoreanName:   info.KoreanName,
+		JapaneseName: info.JapaneseName,
+	}
+	ctx := context.Background()
+	spoilerCode := "spoiler." + code
+
+	if dryrun {
+		common.Log.Info("[DRYRUN] UpsertSpoilerTranslation", logger.Field{Key: "code", Value: spoilerCode}, logger.Field{Key: "en", Value: spoilerInfo.EnglishName})
+		return
+	}
+
+	exists, err := s.queries.CheckTranslationExists(ctx, spoilerCode)
+	if err != nil {
+		panic(err)
+	}
+
+	if exists {
+		err = s.queries.UpdateTranslation(ctx, postgres.UpdateTranslationParams{
+			Key: spoilerCode,
+			Ko:  spoilerInfo.KoreanName,
+			En:  spoilerInfo.EnglishName,
+			Ja:  spoilerInfo.JapaneseName,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	err = s.queries.InsertTranslation(ctx, postgres.InsertTranslationParams{
+		Key: spoilerCode,
+		Ko:  spoilerInfo.KoreanName,
+		En:  spoilerInfo.EnglishName,
+		Ja:  spoilerInfo.JapaneseName,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
