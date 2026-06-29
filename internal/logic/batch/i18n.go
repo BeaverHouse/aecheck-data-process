@@ -1,6 +1,7 @@
 package batch
 
 import (
+	"aecheck-data-process/internal/logic"
 	"aecheck-data-process/internal/logic/common"
 	"aecheck-data-process/internal/logic/database"
 	"aecheck-data-process/internal/types"
@@ -31,7 +32,40 @@ func findTranslation(englishName string, englishClassName string, isClass bool, 
 	if err == nil {
 		return info
 	}
+	if !isClass && logic.IsSpoilerTrueName(englishName) {
+		return promptTranslation(logic.ResolveForDB(englishName), "", false)
+	}
 	return promptTranslation(englishName, englishClassName, isClass)
+}
+
+func findSpoilerTranslation(englishName string, dbService *database.Service) *types.TranslationInfo {
+	if !logic.IsSpoilerTrueName(englishName) {
+		return nil
+	}
+
+	_, aliasInfo, _ := dbService.FindTranslationFromDB(context.Background(), logic.ResolveForDB(englishName), false)
+	key, info, err := dbService.FindCharacterTranslationByExactEnglishName(context.Background(), englishName)
+	if err == nil && !sameLocalizedNames(info, aliasInfo) && !isUnverifiedSpoilerTranslation(key, aliasInfo) {
+		return info
+	}
+
+	if err == nil && sameLocalizedNames(info, aliasInfo) {
+		common.Log.Warn("Spoiler DB translation uses alias localized names", logger.Field{Key: "name", Value: englishName})
+	} else if err == nil && isUnverifiedSpoilerTranslation(key, aliasInfo) {
+		common.Log.Warn("Spoiler DB translation cannot be verified without alias translation", logger.Field{Key: "name", Value: englishName})
+	}
+	return promptSpoilerTranslation(englishName)
+}
+
+func sameLocalizedNames(a *types.TranslationInfo, b *types.TranslationInfo) bool {
+	if a == nil || b == nil {
+		return false
+	}
+	return a.KoreanName == b.KoreanName && a.JapaneseName == b.JapaneseName
+}
+
+func isUnverifiedSpoilerTranslation(key string, aliasInfo *types.TranslationInfo) bool {
+	return strings.HasPrefix(key, "spoiler.c") && aliasInfo == nil
 }
 
 func promptID(englishName, englishClassName string) int {
@@ -62,6 +96,22 @@ func promptTranslation(englishName, englishClassName string, isClass bool) *type
 	en := label
 	return &types.TranslationInfo{
 		EnglishName:  en,
+		KoreanName:   strings.TrimSpace(ko),
+		JapaneseName: strings.TrimSpace(ja),
+	}
+}
+
+func promptSpoilerTranslation(englishName string) *types.TranslationInfo {
+	common.Log.Warn("Enter spoiler true-name translation", logger.Field{Key: "name", Value: englishName})
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("  Korean  : ")
+	ko, _ := reader.ReadString('\n')
+	fmt.Print("  Japanese: ")
+	ja, _ := reader.ReadString('\n')
+
+	return &types.TranslationInfo{
+		EnglishName:  englishName,
 		KoreanName:   strings.TrimSpace(ko),
 		JapaneseName: strings.TrimSpace(ja),
 	}

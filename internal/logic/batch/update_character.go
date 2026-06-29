@@ -13,11 +13,12 @@ import (
 )
 
 type CharacterContext struct {
-	info             *types.CharacterInfoFromAEWiki
-	nameTranslation  *types.TranslationInfo
-	classTranslation *types.TranslationInfo
-	id               int
-	seesaaURL        string
+	info               *types.CharacterInfoFromAEWiki
+	nameTranslation    *types.TranslationInfo
+	spoilerTranslation *types.TranslationInfo
+	classTranslation   *types.TranslationInfo
+	id                 int
+	seesaaURL          string
 }
 
 func ResolveCharacter(wikiURL string, dbService *database.Service) *CharacterContext {
@@ -31,16 +32,18 @@ func ResolveCharacter(wikiURL string, dbService *database.Service) *CharacterCon
 		panic(fmt.Sprintf("Failed to get character info: %v", err))
 	}
 	nameTr := findTranslation(info.EnglishName, info.EnglishClassName, false, dbService)
+	spoilerTr := findSpoilerTranslation(info.EnglishName, dbService)
 	classTr := findTranslation(info.EnglishName, info.EnglishClassName, true, dbService)
 	id := getID(info.GameID, string(info.Style), info.EnglishName, info.EnglishClassName, dbService)
 	seesaaURL := logic.FindSeesaaLink(*info, nameTr.JapaneseName)
 
 	return &CharacterContext{
-		info:             info,
-		nameTranslation:  nameTr,
-		classTranslation: classTr,
-		id:               id,
-		seesaaURL:        seesaaURL,
+		info:               info,
+		nameTranslation:    nameTr,
+		spoilerTranslation: spoilerTr,
+		classTranslation:   classTr,
+		id:                 id,
+		seesaaURL:          seesaaURL,
 	}
 }
 
@@ -76,5 +79,8 @@ func UpdateCharacter(ctx *CharacterContext, dryrun bool, dbService *database.Ser
 		panic(fmt.Sprintf("Failed to upload character image: %v", err))
 	}
 	dbService.UpsertTranslation(*ctx.nameTranslation, fmt.Sprintf("c%d", info.GameID), dryrun)
+	if ctx.spoilerTranslation != nil {
+		dbService.UpsertSpoilerTranslation(*ctx.spoilerTranslation, fmt.Sprintf("c%d", info.GameID), dryrun)
+	}
 	dbService.UpsertTranslation(*ctx.classTranslation, fmt.Sprintf("book.char%04d", id), dryrun)
 }

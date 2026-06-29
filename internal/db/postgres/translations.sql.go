@@ -48,6 +48,34 @@ func (q *Queries) GetCharacterTranslationByEnglishName(ctx context.Context, en s
 	return i, err
 }
 
+const getCharacterTranslationByExactEnglishName = `-- name: GetCharacterTranslationByExactEnglishName :one
+SELECT key, ko, en, ja
+FROM aecheck.translations
+WHERE en = $1
+    AND (key LIKE 'c%' OR key LIKE 'spoiler.c%')
+    AND key NOT LIKE 'char%'
+LIMIT 1
+`
+
+type GetCharacterTranslationByExactEnglishNameRow struct {
+	Key string `json:"key"`
+	Ko  string `json:"ko"`
+	En  string `json:"en"`
+	Ja  string `json:"ja"`
+}
+
+func (q *Queries) GetCharacterTranslationByExactEnglishName(ctx context.Context, en string) (GetCharacterTranslationByExactEnglishNameRow, error) {
+	row := q.db.QueryRow(ctx, getCharacterTranslationByExactEnglishName, en)
+	var i GetCharacterTranslationByExactEnglishNameRow
+	err := row.Scan(
+		&i.Key,
+		&i.Ko,
+		&i.En,
+		&i.Ja,
+	)
+	return i, err
+}
+
 const getClassTranslationByEnglishName = `-- name: GetClassTranslationByEnglishName :one
 SELECT key, ko, en, ja
 FROM aecheck.translations

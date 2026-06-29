@@ -26,6 +26,12 @@ func IsSpoilerTrueName(name string) bool {
 	return false
 }
 
+// IsSpoilerAlias returns true if name is a spoiler-safe alias stored in DB.
+func IsSpoilerAlias(name string) bool {
+	_, ok := constants.SPOILER_NAMES[name]
+	return ok
+}
+
 // ResolveForDB returns the name to use when searching the DB.
 // All SPOILER_NAMES characters have their alias stored in DB (not the true name),
 // so both alias→trueName and trueName→alias lookups resolve to the DB-stored alias.
