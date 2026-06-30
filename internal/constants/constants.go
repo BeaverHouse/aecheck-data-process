@@ -26,6 +26,7 @@ var SPOILER_NAMES = map[string]string{
 	"Black Clad Sw.": "Isuka (Alter)",
 	"Azure Retainer": "Vares",
 	"Nekoko":         "Necoco (Alter)",
+	"Chelika":        "Spirika",
 	"Dark Devourer":  "Mighty (Alter)",
 }
 
