@@ -38,14 +38,6 @@ FROM aecheck.translations
 WHERE en = $1 AND key LIKE 'c%' AND key NOT LIKE 'char%'
 LIMIT 1;
 
--- name: GetCharacterTranslationByExactEnglishName :one
-SELECT key, ko, en, ja
-FROM aecheck.translations
-WHERE en = $1
-    AND (key LIKE 'c%' OR key LIKE 'spoiler.c%')
-    AND key NOT LIKE 'char%'
-LIMIT 1;
-
 -- name: GetClassTranslationByEnglishName :one
 SELECT key, ko, en, ja
 FROM aecheck.translations

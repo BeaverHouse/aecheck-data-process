@@ -27,7 +27,6 @@ type Querier interface {
 	GetCharacterIDByWikiURL(ctx context.Context, aewikiUrl pgtype.Text) (string, error)
 	GetCharacterJSONBData(ctx context.Context, characterID string) (GetCharacterJSONBDataRow, error)
 	GetCharacterTranslationByEnglishName(ctx context.Context, en string) (GetCharacterTranslationByEnglishNameRow, error)
-	GetCharacterTranslationByExactEnglishName(ctx context.Context, en string) (GetCharacterTranslationByExactEnglishNameRow, error)
 	GetCharacterWithTranslation(ctx context.Context, characterID string) (GetCharacterWithTranslationRow, error)
 	GetClassTranslationByEnglishName(ctx context.Context, en string) (GetClassTranslationByEnglishNameRow, error)
 	GetDungeonByID(ctx context.Context, dungeonID string) (GetDungeonByIDRow, error)

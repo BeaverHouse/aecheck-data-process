@@ -29,9 +29,10 @@ const (
 
 // CharacterInfoFromAEWikiURL contains basic character info from wiki URL
 type CharacterInfoFromAEWikiURL struct {
-	EnglishName string  // 영문 이름
-	Style       AEStyle // 스타일
-	IsAlter     bool    // 이시층 여부
+	EnglishName        string  // 영문 이름
+	SpoilerEnglishName string  // 스포일러 진명
+	Style              AEStyle // 스타일
+	IsAlter            bool    // 이시층 여부
 }
 
 // CharacterInfoFromAEWiki contains complete character info from wiki

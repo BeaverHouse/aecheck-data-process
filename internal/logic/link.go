@@ -33,7 +33,7 @@ func FindAlterLink(info types.CharacterInfoFromAEWiki) string {
 		// 가명 URL인 경우(_(Alter)가 없음): 진명 기반 URL을 직접 구성
 		// e.g. Nekoko → Necoco_(Alter) → 원본은 Necoco
 		if !strings.Contains(info.WikiURL, constants.AEWIKI_ALTER_SUFFIX) {
-			trueName := strings.TrimSuffix(info.EnglishName, " (Alter)")
+			trueName := strings.TrimSuffix(info.SpoilerEnglishName, " (Alter)")
 			trueName = strings.ReplaceAll(trueName, " ", "_")
 			return constants.AEWIKI_BASE_URL + trueName
 		}

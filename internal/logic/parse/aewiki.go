@@ -147,28 +147,52 @@ func getRedirectURL(doc *goquery.Document, wikiURL string) string {
 	return redirectURL
 }
 
+func getCharacterNameURL(doc *goquery.Document, wikiURL string) string {
+	wikiTitle := strings.TrimPrefix(wikiURL, constants.AEWIKI_BASE_URL)
+	wikiName := characterNameFromWikiTitle(wikiTitle)
+	if logic.ResolveSpoilerName(wikiName) != wikiName {
+		return wikiURL
+	}
+	aliasName := logic.ResolveForDB(wikiName)
+	if aliasName != wikiName {
+		return constants.AEWIKI_BASE_URL + strings.ReplaceAll(aliasName, " ", "_")
+	}
+	return getRedirectURL(doc, wikiURL)
+}
+
+func characterNameFromWikiTitle(title string) string {
+	name := title
+	if idx := strings.Index(name, "("); idx != -1 {
+		name = name[:idx]
+	}
+	name = strings.TrimSpace(strings.ReplaceAll(name, "_", " "))
+	if strings.Contains(title, constants.AEWIKI_ALTER_SUFFIX) && !strings.HasSuffix(name, " (Alter)") {
+		name += " (Alter)"
+	}
+	return name
+}
+
 func ExtractCharacterInfoFromAEWikiDoc(doc *goquery.Document, wikiURL string) (*types.CharacterInfoFromAEWikiURL, error) {
-	redirectURL := getRedirectURL(doc, wikiURL)
+	redirectURL := getCharacterNameURL(doc, wikiURL)
 
 	title := strings.TrimPrefix(redirectURL, "https://anothereden.wiki/w/")
 	info := &types.CharacterInfoFromAEWikiURL{}
 
-	// 이름 추출 (괄호 이전까지)
-	if idx := strings.Index(title, "("); idx != -1 {
-		info.EnglishName = strings.TrimSpace(strings.ReplaceAll(title[:idx], "_", " "))
-	} else {
-		info.EnglishName = strings.TrimSpace(strings.ReplaceAll(title, "_", " "))
-	}
+	info.EnglishName = characterNameFromWikiTitle(title)
 
-	// 스포일러 가명이면 진명으로 교체
-	info.EnglishName = logic.ResolveSpoilerName(info.EnglishName)
+	spoilerName := info.EnglishName
+	aliasName := logic.ResolveForDB(info.EnglishName)
+	if aliasName != info.EnglishName {
+		info.SpoilerEnglishName = info.EnglishName
+		info.EnglishName = aliasName
+	} else if resolvedName := logic.ResolveSpoilerName(info.EnglishName); resolvedName != info.EnglishName {
+		info.SpoilerEnglishName = resolvedName
+		spoilerName = resolvedName
+	}
 
 	// 이시층 여부 확인
-	isAlter := strings.Contains(title, constants.AEWIKI_ALTER_SUFFIX) || strings.HasSuffix(info.EnglishName, " (Alter)")
+	isAlter := strings.Contains(title, constants.AEWIKI_ALTER_SUFFIX) || strings.HasSuffix(spoilerName, " (Alter)")
 	info.IsAlter = isAlter
-	if strings.Contains(title, constants.AEWIKI_ALTER_SUFFIX) && !strings.HasSuffix(info.EnglishName, " (Alter)") {
-		info.EnglishName += " (Alter)"
-	}
 
 	// 스타일 확인
 	switch {
