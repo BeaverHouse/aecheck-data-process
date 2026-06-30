@@ -265,8 +265,11 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 
 	characterClassTable := doc.Find("div.character-class td")
 
-	bookEndpoint := characterClassTable.Eq(7).Find("a").Eq(0).AttrOr("href", "")
-	bookLink := "https://anothereden.wiki" + bookEndpoint
+	bookEndpoint := strings.TrimSpace(characterClassTable.Eq(7).Find("a").Eq(0).AttrOr("href", ""))
+	bookLink := ""
+	if bookEndpoint != "" {
+		bookLink = "https://anothereden.wiki" + bookEndpoint
+	}
 
 	className := strings.TrimSpace(characterClassTable.Eq(7).Text())
 	// Remove newlines and control characters
@@ -280,14 +283,15 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 	if idx := strings.Index(className, " ..."); idx != -1 {
 		className = strings.TrimSpace(className[:idx])
 	}
+	isFreeClass := strings.Contains(strings.ToLower(className), "(free)")
 	// Remove (free), (paid) etc.
 	if idx := strings.Index(className, "("); idx != -1 {
 		className = strings.TrimSpace(className[:idx])
 	}
 	info.EnglishClassName = className
-	info.Dungeons, err = getDungeonsFromAEWiki(info.Style, info.IsAlter, bookLink)
+	info.Dungeons, err = getDungeonsFromAEWiki(info.Style, info.IsAlter, isFreeClass, bookLink)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get dungeons for %s (%s): %w", info.EnglishName, className, err)
 	}
 
 	return info, nil
@@ -338,7 +342,7 @@ func checkCustomManifest(manifestWeaponLink string) bool {
 	return strings.Contains(doc.Text(), "Weapon Tempering")
 }
 
-func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, bookLink string) ([]string, error) {
+func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, isFreeClass bool, bookLink string) ([]string, error) {
 	switch style {
 	case types.StyleAS:
 		return []string{"Treatise"}, nil
@@ -350,6 +354,17 @@ func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, bookLink string) (
 
 	if IsAlter {
 		return []string{"Opus"}, nil
+	}
+
+	if isFreeClass {
+		return []string{"In-game"}, nil
+	}
+
+	if bookLink == "" {
+		return nil, fmt.Errorf("missing class book link")
+	}
+	if !strings.HasPrefix(bookLink, constants.AEWIKI_BASE_URL) {
+		return nil, fmt.Errorf("invalid class book link: %s", bookLink)
 	}
 
 	doc, err := data.GetDocumentFromURL(bookLink)
