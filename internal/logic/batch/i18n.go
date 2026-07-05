@@ -32,40 +32,26 @@ func findTranslation(englishName string, englishClassName string, isClass bool, 
 	if err == nil {
 		return info
 	}
-	if !isClass && logic.IsSpoilerTrueName(englishName) {
-		return promptTranslation(logic.ResolveForDB(englishName), "", false)
-	}
 	return promptTranslation(englishName, englishClassName, isClass)
 }
 
-func findSpoilerTranslation(englishName string, dbService *database.Service) *types.TranslationInfo {
+func findSpoilerTranslation(englishName string, code string, dbService *database.Service) *types.TranslationInfo {
+	if englishName == "" {
+		return nil
+	}
 	if !logic.IsSpoilerTrueName(englishName) {
 		return nil
 	}
 
-	_, aliasInfo, _ := dbService.FindTranslationFromDB(context.Background(), logic.ResolveForDB(englishName), false)
-	key, info, err := dbService.FindCharacterTranslationByExactEnglishName(context.Background(), englishName)
-	if err == nil && !sameLocalizedNames(info, aliasInfo) && !isUnverifiedSpoilerTranslation(key, aliasInfo) {
-		return info
-	}
-
-	if err == nil && sameLocalizedNames(info, aliasInfo) {
-		common.Log.Warn("Spoiler DB translation uses alias localized names", logger.Field{Key: "name", Value: englishName})
-	} else if err == nil && isUnverifiedSpoilerTranslation(key, aliasInfo) {
-		common.Log.Warn("Spoiler DB translation cannot be verified without alias translation", logger.Field{Key: "name", Value: englishName})
+	row, err := dbService.GetTranslation(context.Background(), "spoiler."+code)
+	if err == nil && row.En == englishName {
+		return &types.TranslationInfo{
+			EnglishName:  row.En,
+			KoreanName:   row.Ko,
+			JapaneseName: row.Ja,
+		}
 	}
 	return promptSpoilerTranslation(englishName)
-}
-
-func sameLocalizedNames(a *types.TranslationInfo, b *types.TranslationInfo) bool {
-	if a == nil || b == nil {
-		return false
-	}
-	return a.KoreanName == b.KoreanName && a.JapaneseName == b.JapaneseName
-}
-
-func isUnverifiedSpoilerTranslation(key string, aliasInfo *types.TranslationInfo) bool {
-	return strings.HasPrefix(key, "spoiler.c") && aliasInfo == nil
 }
 
 func promptID(englishName, englishClassName string) int {

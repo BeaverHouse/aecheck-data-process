@@ -101,11 +101,6 @@ func (s *Service) UpsertSpoilerTranslation(info types.TranslationInfo, code stri
 		return
 	}
 
-	safeName := logic.ResolveForDB(info.EnglishName)
-	if !logic.IsSpoilerAlias(safeName) {
-		return
-	}
-
 	spoilerInfo := types.TranslationInfo{
 		EnglishName:  info.EnglishName,
 		KoreanName:   info.KoreanName,

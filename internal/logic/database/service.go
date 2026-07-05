@@ -114,11 +114,3 @@ func (s *Service) FindTranslationFromDB(ctx context.Context, englishName string,
 	}
 	return row.Key, &types.TranslationInfo{EnglishName: row.En, KoreanName: row.Ko, JapaneseName: row.Ja}, nil
 }
-
-func (s *Service) FindCharacterTranslationByExactEnglishName(ctx context.Context, englishName string) (string, *types.TranslationInfo, error) {
-	row, err := s.queries.GetCharacterTranslationByExactEnglishName(ctx, englishName)
-	if err != nil {
-		return "", nil, err
-	}
-	return row.Key, &types.TranslationInfo{EnglishName: row.En, KoreanName: row.Ko, JapaneseName: row.Ja}, nil
-}

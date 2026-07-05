@@ -32,7 +32,7 @@ func ResolveCharacter(wikiURL string, dbService *database.Service) *CharacterCon
 		panic(fmt.Sprintf("Failed to get character info: %v", err))
 	}
 	nameTr := findTranslation(info.EnglishName, info.EnglishClassName, false, dbService)
-	spoilerTr := findSpoilerTranslation(info.EnglishName, dbService)
+	spoilerTr := findSpoilerTranslation(info.SpoilerEnglishName, fmt.Sprintf("c%d", info.GameID), dbService)
 	classTr := findTranslation(info.EnglishName, info.EnglishClassName, true, dbService)
 	id := getID(info.GameID, string(info.Style), info.EnglishName, info.EnglishClassName, dbService)
 	seesaaURL := logic.FindSeesaaLink(*info, nameTr.JapaneseName)
