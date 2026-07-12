@@ -58,7 +58,7 @@ func promptID(englishName, englishClassName string) int {
 	common.Log.Warn("No DB entry found", logger.Field{Key: "name", Value: englishName}, logger.Field{Key: "class", Value: englishClassName})
 	fmt.Print("Enter numeric ID: ")
 	var input string
-	fmt.Fscan(os.Stdin, &input)
+	fmt.Fscanln(os.Stdin, &input)
 	id, err := strconv.Atoi(strings.TrimSpace(input))
 	if err != nil {
 		panic(fmt.Sprintf("invalid ID input: %s", input))
