@@ -28,4 +28,9 @@ Register-ScheduledTask `
     -Description "Checks Another Eden notice hash and runs AE Check update-recent when due." `
     -Force -ErrorAction Stop | Out-Null
 
+wevtutil.exe set-log "Microsoft-Windows-TaskScheduler/Operational" /enabled:true
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Scheduled Task history could not be enabled. User notifications will still work."
+}
+
 Write-Host "Registered scheduled task: $taskName"
