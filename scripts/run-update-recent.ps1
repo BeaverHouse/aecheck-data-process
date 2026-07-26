@@ -13,6 +13,13 @@ try {
     Write-Host "If this window is closed or the command fails, AECheck will retry at the next login."
     Write-Host ""
 
+    $imageConfirmation = Read-Host "Have you copied the latest LDPlayer images for this update? (y/N)"
+    if ($imageConfirmation.Trim().ToLowerInvariant() -notin @("y", "yes")) {
+        Write-Host "Copy the LDPlayer images first. The update will remain pending." -ForegroundColor Yellow
+        Read-Host "Press Enter to close this window"
+        exit 2
+    }
+
     & $aecheckPath update-recent
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
