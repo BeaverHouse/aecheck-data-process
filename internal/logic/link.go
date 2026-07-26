@@ -4,7 +4,6 @@ import (
 	"aecheck-data-process/internal/constants"
 	"aecheck-data-process/internal/types"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"io"
@@ -12,15 +11,6 @@ import (
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
-
-func checkPageExists(url string) bool {
-	resp, err := http.Get(url)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == http.StatusOK
-}
 
 func FindAlterLink(info types.CharacterInfoFromAEWiki) string {
 	// 1. style이 NS가 아닐 경우 "None"
@@ -40,12 +30,9 @@ func FindAlterLink(info types.CharacterInfoFromAEWiki) string {
 		return strings.Replace(info.WikiURL, constants.AEWIKI_ALTER_SUFFIX, "", 1)
 	}
 
-	// 3. style이 NS인데 isAlter가 false라면 링크 끝에 _(Alter)를 붙이고, 그 페이지가 실제로 존재하는 페이지라면 그게 답이다. 아니면 "None"이다.
-	alterURL := info.WikiURL + constants.AEWIKI_ALTER_SUFFIX
-	if checkPageExists(alterURL) {
-		return alterURL
-	}
-	return "None"
+	// 3. style이 NS인데 isAlter가 false라면 Alter 후보 URL을 반환한다.
+	// 실제 존재 여부는 DB 조회로 판정하여 Wiki의 Cloudflare 응답에 영향을 받지 않게 한다.
+	return info.WikiURL + constants.AEWIKI_ALTER_SUFFIX
 }
 
 func encodeSeesaaURL(raw string) string {
