@@ -1,5 +1,18 @@
 package common
 
-import "github.com/BeaverHouse/go-common/logger"
+import (
+	"log"
 
-var Log logger.Logger = logger.NewSimpleLogger()
+	"github.com/BeaverHouse/go-common/logger"
+)
+
+// Log is the process-wide logger selected from the environment.
+var Log = newLogger()
+
+func newLogger() logger.Logger {
+	built, err := logger.NewLogger()
+	if err != nil {
+		log.Fatalf("logger init failed: %v", err)
+	}
+	return built
+}

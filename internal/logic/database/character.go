@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BeaverHouse/go-common/conv"
 	"github.com/BeaverHouse/go-common/logger"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -19,13 +20,13 @@ import (
 func (s *Service) resolveAlterCharacterID(ctx context.Context, info types.CharacterInfoFromAEWiki) pgtype.Text {
 	link := logic.FindAlterLink(info)
 	if link == "" {
-		return pgtype.Text{Valid: false}
+		return conv.ToPgText(nil)
 	}
-	alterCode, err := s.queries.GetCharacterCodeByWikiURL(ctx, pgtype.Text{String: link, Valid: true})
+	alterCode, err := s.queries.GetCharacterCodeByWikiURL(ctx, conv.ToPgText(&link))
 	if err != nil {
-		return pgtype.Text{Valid: false}
+		return conv.ToPgText(nil)
 	}
-	return pgtype.Text{String: alterCode, Valid: true}
+	return conv.ToPgText(&alterCode)
 }
 
 // CompareCharacter compares character info from wiki with database
@@ -132,11 +133,11 @@ func (s *Service) UpsertCharacter(info types.CharacterInfoFromAEWiki, seesaaURL 
 
 	calculatedAlterCharacterID := s.resolveAlterCharacterID(ctx, info)
 
-	updateDate := pgtype.Date{Valid: false}
+	updateDate := conv.ToPgDate(nil)
 	if info.UpdateDate != "" {
 		t, err := time.Parse("2006-01-02", info.UpdateDate)
 		if err == nil {
-			updateDate = pgtype.Date{Time: t, Valid: true}
+			updateDate = conv.ToPgDate(&t)
 		}
 	}
 
@@ -168,10 +169,10 @@ func (s *Service) UpsertCharacter(info types.CharacterInfoFromAEWiki, seesaaURL 
 			IsAwaken:          info.IsAwaken,
 			IsAlter:           info.IsAlter,
 			AlterCharacter:    calculatedAlterCharacterID,
-			AewikiUrl:         pgtype.Text{String: info.WikiURL, Valid: true},
-			SeesaaUrl:         pgtype.Text{String: seesaaURL, Valid: true},
+			AewikiUrl:         conv.ToPgText(&info.WikiURL),
+			SeesaaUrl:         conv.ToPgText(&seesaaURL),
 			UpdateDate:        updateDate,
-			CustomManifest:    pgtype.Bool{Bool: info.IsManifestCustom, Valid: true},
+			CustomManifest:    conv.ToPgBool(&info.IsManifestCustom),
 			PersonalitiesData: personalitiesData,
 			DungeonsData:      dungeonsData,
 			BuddyData:         buddyData,
@@ -191,10 +192,10 @@ func (s *Service) UpsertCharacter(info types.CharacterInfoFromAEWiki, seesaaURL 
 			IsAwaken:          info.IsAwaken,
 			IsAlter:           info.IsAlter,
 			AlterCharacter:    calculatedAlterCharacterID,
-			AewikiUrl:         pgtype.Text{String: info.WikiURL, Valid: true},
-			SeesaaUrl:         pgtype.Text{String: seesaaURL, Valid: true},
+			AewikiUrl:         conv.ToPgText(&info.WikiURL),
+			SeesaaUrl:         conv.ToPgText(&seesaaURL),
 			UpdateDate:        updateDate,
-			CustomManifest:    pgtype.Bool{Bool: info.IsManifestCustom, Valid: true},
+			CustomManifest:    conv.ToPgBool(&info.IsManifestCustom),
 			PersonalitiesData: personalitiesData,
 			DungeonsData:      dungeonsData,
 			BuddyData:         buddyData,

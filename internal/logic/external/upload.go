@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/BeaverHouse/go-common/env"
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/BeaverHouse/go-common/logger"
 	"github.com/HugoSmits86/nativewebp"
 	"golang.org/x/image/webp"
@@ -54,19 +55,19 @@ func uploadFile(path string, fileName string, data []byte) error {
 
 	req, err := http.NewRequest(http.MethodPut, fullURL, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("uploadFile: %w", err)
+		return errorhandle.Wrap(errorhandle.KindInternal, "UPLOAD_REQUEST_BUILD_FAILED", "uploadFile", err)
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("uploadFile: %w", err)
+		return errorhandle.Wrap(errorhandle.KindUnavailable, "UPLOAD_REQUEST_FAILED", "uploadFile", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("uploadFile: status %d, body: %s", resp.StatusCode, string(body))
+		return errorhandle.New(errorhandle.KindUnavailable, "UPLOAD_REJECTED", fmt.Sprintf("uploadFile: status %d, body: %s", resp.StatusCode, string(body)))
 	}
 
 	common.Log.Info("File uploaded", logger.Field{Key: "path", Value: path}, logger.Field{Key: "fileName", Value: fileName})
@@ -87,12 +88,12 @@ func decodeImage(imgBytes []byte) (image.Image, error) {
 func convertToWebp(imgBytes []byte) ([]byte, error) {
 	img, err := decodeImage(imgBytes)
 	if err != nil {
-		return nil, fmt.Errorf("convertToWebp: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInvalid, "IMAGE_DECODE_FAILED", "convertToWebp", err)
 	}
 
 	var webpBuf bytes.Buffer
 	if err := nativewebp.Encode(&webpBuf, img, nil); err != nil {
-		return nil, fmt.Errorf("convertToWebp: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "WEBP_ENCODE_FAILED", "convertToWebp", err)
 	}
 
 	return webpBuf.Bytes(), nil
@@ -104,12 +105,12 @@ func uploadImagePair(uploadPath, characterID string, imgBytes []byte) error {
 	if isWebP(imgBytes) {
 		img, err := decodeImage(imgBytes)
 		if err != nil {
-			return fmt.Errorf("uploadImagePair: %w", err)
+			return errorhandle.Wrap(errorhandle.KindInvalid, "IMAGE_DECODE_FAILED", "uploadImagePair", err)
 		}
 
 		var pngBuf bytes.Buffer
 		if err := png.Encode(&pngBuf, img); err != nil {
-			return fmt.Errorf("uploadImagePair: %w", err)
+			return errorhandle.Wrap(errorhandle.KindInternal, "PNG_ENCODE_FAILED", "uploadImagePair", err)
 		}
 		pngBytes = pngBuf.Bytes()
 		webpBytes = imgBytes
@@ -158,7 +159,7 @@ func UploadCharacterImage(info types.CharacterInfoFromAEWiki, id int, isFourStar
 	common.Log.Info("Reading character image", logger.Field{Key: "path", Value: imagePath})
 	imgBytes, err := os.ReadFile(imagePath)
 	if err != nil {
-		return fmt.Errorf("UploadCharacterImage: %w", err)
+		return errorhandle.Wrap(errorhandle.KindInternal, "CHARACTER_IMAGE_UPLOAD_FAILED", "UploadCharacterImage", err)
 	}
 
 	uploadPath := getUploadPath("character", dryrun)
@@ -197,7 +198,7 @@ func UploadBuddyImage(gameID int, buddyID string, dryrun bool) error {
 	common.Log.Info("Reading buddy image", logger.Field{Key: "path", Value: imagePath})
 	imgBytes, err := os.ReadFile(imagePath)
 	if err != nil {
-		return fmt.Errorf("UploadBuddyImage: %w", err)
+		return errorhandle.Wrap(errorhandle.KindInternal, "BUDDY_IMAGE_UPLOAD_FAILED", "UploadBuddyImage", err)
 	}
 
 	uploadPath := getUploadPath("buddy", dryrun)

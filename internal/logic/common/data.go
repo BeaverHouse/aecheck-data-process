@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/BeaverHouse/go-common/env"
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/BeaverHouse/go-common/logger"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -58,12 +59,12 @@ func getDataWithBrowser(url string) ([]byte, error) {
 
 	path, found := findInstalledBrowser()
 	if !found {
-		return nil, fmt.Errorf("GetDataFromURL: no installed browser found (Chrome/Edge required)")
+		return nil, errorhandle.New(errorhandle.KindFailedPrecondition, "BROWSER_NOT_FOUND", "GetDataFromURL: no installed browser found (Chrome/Edge required)")
 	}
 
 	profileDir := filepath.Join(os.TempDir(), "aecheck-browser-profile")
 	if err := os.MkdirAll(profileDir, 0755); err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: create profile dir: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "BROWSER_PROFILE_DIR_FAILED", "GetDataFromURL: create profile dir", err)
 	}
 
 	cmd := exec.Command(path,
@@ -74,7 +75,7 @@ func getDataWithBrowser(url string) ([]byte, error) {
 		url,
 	)
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: launch browser: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "BROWSER_LAUNCH_FAILED", "GetDataFromURL: launch browser", err)
 	}
 	defer func() {
 		_ = cmd.Process.Kill()
@@ -82,13 +83,13 @@ func getDataWithBrowser(url string) ([]byte, error) {
 
 	controlURL, err := waitForDebugEndpoint()
 	if err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindUnavailable, "BROWSER_DEBUG_ENDPOINT_FAILED", "GetDataFromURL", err)
 	}
 
 	fmt.Printf("\n[browser] Opened: %s\n", url)
 	fmt.Println("[browser] Solve any Cloudflare challenge in the browser, then press Enter to continue...")
 	if err := waitForBrowserConfirmation(); err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: waiting for browser confirmation: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "BROWSER_CONFIRMATION_FAILED", "GetDataFromURL: waiting for browser confirmation", err)
 	}
 
 	browser := rod.New().ControlURL(controlURL).MustConnect()
@@ -96,7 +97,7 @@ func getDataWithBrowser(url string) ([]byte, error) {
 
 	pages, err := browser.Pages()
 	if err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: list pages: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "BROWSER_PAGE_LIST_FAILED", "GetDataFromURL: list pages", err)
 	}
 	var target *rod.Page
 	for _, p := range pages {
@@ -125,18 +126,18 @@ func getDataWithBrowser(url string) ([]byte, error) {
 		target = pages[0]
 	}
 	if target == nil {
-		return nil, fmt.Errorf("GetDataFromURL: no page found in browser")
+		return nil, errorhandle.New(errorhandle.KindInternal, "BROWSER_PAGE_MISSING", "GetDataFromURL: no page found in browser")
 	}
 	target.MustWaitLoad()
 
 	html, err := target.HTML()
 	if err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: browser: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "BROWSER_HTML_READ_FAILED", "GetDataFromURL: browser", err)
 	}
 
 	body := []byte(html)
 	if len(body) == 0 {
-		return nil, fmt.Errorf("GetDataFromURL: the data from URL is empty: %s", url)
+		return nil, errorhandle.New(errorhandle.KindUnavailable, "BROWSER_RESPONSE_EMPTY", fmt.Sprintf("GetDataFromURL: the data from URL is empty: %s", url))
 	}
 	Log.Info("Response successfully fetched (browser)", logger.Field{Key: "url", Value: url}, logger.Field{Key: "duration", Value: time.Since(start)})
 	return body, nil
@@ -175,26 +176,26 @@ func waitForDebugEndpoint() (string, error) {
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
-	return "", fmt.Errorf("timeout waiting for browser debug endpoint")
+	return "", errorhandle.New(errorhandle.KindUnavailable, "BROWSER_DEBUG_ENDPOINT_TIMEOUT", "timeout waiting for browser debug endpoint")
 }
 
 func getDataWithHTTP(url string) ([]byte, error) {
 	start := time.Now()
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindUnavailable, "HTTP_REQUEST_FAILED", "GetDataFromURL", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("GetDataFromURL: invalid status code: %d", resp.StatusCode)
+		return nil, errorhandle.New(errorhandle.KindUnavailable, "HTTP_STATUS_INVALID", fmt.Sprintf("GetDataFromURL: invalid status code: %d", resp.StatusCode))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("GetDataFromURL: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "HTTP_BODY_READ_FAILED", "GetDataFromURL", err)
 	} else if len(body) == 0 {
-		return nil, fmt.Errorf("GetDataFromURL: the data from URL is empty: %s", url)
+		return nil, errorhandle.New(errorhandle.KindUnavailable, "HTTP_RESPONSE_EMPTY", fmt.Sprintf("GetDataFromURL: the data from URL is empty: %s", url))
 	}
 	Log.Info("Response successfully fetched", logger.Field{Key: "url", Value: url}, logger.Field{Key: "duration", Value: time.Since(start)})
 	return body, nil

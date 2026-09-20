@@ -2,10 +2,10 @@ package external
 
 import (
 	"bytes"
-	"fmt"
 
 	"aecheck-data-process/internal/logic/common"
 
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -13,11 +13,11 @@ import (
 func GetDocumentFromURL(url string) (*goquery.Document, error) {
 	resp, err := common.GetDataFromURL(url)
 	if err != nil {
-		return nil, fmt.Errorf("GetDocumentFromURL: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindUnavailable, "WIKI_FETCH_FAILED", "GetDocumentFromURL", err)
 	}
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(resp))
 	if err != nil {
-		return nil, fmt.Errorf("GetDocumentFromURL: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "WIKI_DOCUMENT_PARSE_FAILED", "GetDocumentFromURL", err)
 	}
 	return doc, nil
 }

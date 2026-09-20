@@ -9,9 +9,12 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -61,7 +64,7 @@ func ExtractRecentUpdateGroups(html []byte) ([]RecentUpdateGroup, error) {
 		groups = append(groups, RecentUpdateGroup{Kind: kind, Label: label, Links: links})
 	})
 	if len(groups) == 0 {
-		return nil, fmt.Errorf("no recent update groups found on AE Wiki home; solve Cloudflare challenge and retry")
+		return nil, errorhandle.New(errorhandle.KindUnavailable, "AEWIKI_RECENT_GROUPS_MISSING", "no recent update groups found on AE Wiki home; solve Cloudflare challenge and retry")
 	}
 	return groups, nil
 }
@@ -210,7 +213,7 @@ func ExtractCharacterInfoFromAEWikiDoc(doc *goquery.Document, wikiURL string) (*
 func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterInfoFromAEWiki, error) {
 	baseInfo, err := ExtractCharacterInfoFromAEWikiDoc(doc, wikiURL)
 	if err != nil {
-		return nil, fmt.Errorf("GetCharacterInfo: %w", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "AEWIKI_CHARACTER_INFO_FAILED", "GetCharacterInfo", err)
 	}
 
 	info := &types.CharacterInfoFromAEWiki{
@@ -218,7 +221,7 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 		WikiURL:                    getRedirectURL(doc, wikiURL),
 	}
 
-	generalData := doc.Find("article[title='General Data'] td")
+	generalData := findInfoPanel(doc, "General Data").Find("td")
 
 	rarityText := generalData.Eq(0).Text()
 	info.IsAwaken = logic.CheckAwaken(rarityText)
@@ -243,7 +246,7 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 	}
 	info.Personalities = personalities
 
-	otherDataArticle := doc.Find("article[title='Other Data']")
+	otherDataArticle := findInfoPanel(doc, "Other Data")
 	otherData := otherDataArticle.Find("td")
 	code := 0
 	fmt.Sscanf(strings.TrimSpace(otherData.Eq(1).Text()), "%d", &code)
@@ -274,7 +277,7 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 			}
 		})
 		if manifestWeaponLink == "" {
-			return nil, fmt.Errorf("no manifest weapon link found")
+			return nil, errorhandle.New(errorhandle.KindInternal, "AEWIKI_MANIFEST_WEAPON_LINK_MISSING", "no manifest weapon link found")
 		}
 		info.IsManifestCustom = checkCustomManifest(manifestWeaponLink)
 		if strings.Contains(tdSelection.Eq(5).Text(), "True Manifest") {
@@ -315,10 +318,21 @@ func GetCharacterInfo(doc *goquery.Document, wikiURL string) (*types.CharacterIn
 	info.EnglishClassName = className
 	info.Dungeons, err = getDungeonsFromAEWiki(info.Style, info.IsAlter, isFreeClass, bookLink)
 	if err != nil {
-		return nil, fmt.Errorf("get dungeons for %s (%s): %w", info.EnglishName, className, err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "AEWIKI_DUNGEONS_FAILED", fmt.Sprintf("get dungeons for %s (%s)", info.EnglishName, className), err)
 	}
 
 	return info, nil
+}
+
+// findInfoPanel returns the infobox tab panel carrying the given label.
+// The wiki serves the legacy TabberNeue markup, an article whose title is the
+// label, on some pages and the current markup, a panel keyed by id, on others.
+func findInfoPanel(doc *goquery.Document, label string) *goquery.Selection {
+	legacyPanel := doc.Find(fmt.Sprintf("article[title=%q]", label))
+	if legacyPanel.Length() > 0 {
+		return legacyPanel
+	}
+	return doc.Find("#tabber-" + strings.ReplaceAll(label, " ", "_"))
 }
 
 func extractUpdateDate(otherDataArticle *goquery.Selection) (string, error) {
@@ -328,7 +342,7 @@ func extractUpdateDate(otherDataArticle *goquery.Selection) (string, error) {
 			return updateDate, nil
 		}
 	}
-	return "", fmt.Errorf("no update date found in Other Data")
+	return "", errorhandle.New(errorhandle.KindInternal, "AEWIKI_UPDATE_DATE_MISSING", "no update date found in Other Data")
 }
 
 func updateDateCandidates(otherDataArticle *goquery.Selection) []string {
@@ -385,15 +399,15 @@ func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, isFreeClass bool, 
 	}
 
 	if bookLink == "" {
-		return nil, fmt.Errorf("missing class book link")
+		return nil, errorhandle.New(errorhandle.KindInternal, "AEWIKI_CLASS_BOOK_LINK_MISSING", "missing class book link")
 	}
 	if !strings.HasPrefix(bookLink, constants.AEWIKI_BASE_URL) {
-		return nil, fmt.Errorf("invalid class book link: %s", bookLink)
+		return nil, errorhandle.New(errorhandle.KindInternal, "AEWIKI_CLASS_BOOK_LINK_INVALID", fmt.Sprintf("invalid class book link: %s", bookLink))
 	}
 
 	doc, err := data.GetDocumentFromURL(bookLink)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %v", err)
+		return nil, errorhandle.Wrap(errorhandle.KindInternal, "AEWIKI_HTML_PARSE_FAILED", "failed to parse HTML", err)
 	}
 
 	var dungeons []string
@@ -408,6 +422,25 @@ func getDungeonsFromAEWiki(style types.AEStyle, IsAlter bool, isFreeClass bool, 
 		return []string{"In-game"}, nil
 	}
 	return dungeons, nil
+}
+
+// gameIDPattern matches the game id inside an icon file name such as
+// "80px-2000000013_s2_command.png", skipping any thumbnail width prefix.
+var gameIDPattern = regexp.MustCompile(`\d{6,}`)
+
+// buddyGameID reads the buddy's game id. Older wiki pages carry it in the icon's
+// alt text; current ones expose it only in the icon file name.
+func buddyGameID(sidekickImage *goquery.Selection) int {
+	if alt := strings.Fields(sidekickImage.AttrOr("alt", "")); len(alt) > 0 {
+		if code, err := strconv.Atoi(alt[0]); err == nil {
+			return code
+		}
+	}
+	code, err := strconv.Atoi(gameIDPattern.FindString(sidekickImage.AttrOr("src", "")))
+	if err != nil {
+		return 0
+	}
+	return code
 }
 
 func GetBuddyInfoFromAEWiki(doc *goquery.Document, wikiURL string) (*types.BuddyInfoFromAEWiki, error) {
@@ -442,17 +475,17 @@ func GetBuddyInfoFromAEWiki(doc *goquery.Document, wikiURL string) (*types.Buddy
 		info.Style = types.StyleNS
 	}
 
-	sidekickImage := doc.Find("div.sidekick-icon img")
-	var code int
-	fmt.Sscanf(strings.Split(sidekickImage.AttrOr("alt", ""), " ")[0], "%d", &code)
-	info.GameID = code
+	info.GameID = buddyGameID(doc.Find("div.sidekick-icon img"))
+	if info.GameID == 0 {
+		return nil, errorhandle.New(errorhandle.KindInternal, "AEWIKI_BUDDY_GAME_ID_MISSING", fmt.Sprintf("no buddy game id found in the sidekick icon: %s", wikiURL))
+	}
 
 	sidekickOwnerLink := doc.Find("div.sidekick-owner a")
 	if sidekickOwnerLink.Length() > 0 {
 		partnerURL := "https://anothereden.wiki" + sidekickOwnerLink.AttrOr("href", "")
 		partnerDoc, err := data.GetDocumentFromURL(partnerURL)
 		if err != nil {
-			return nil, fmt.Errorf("GetBuddyInfoFromAEWiki: %w", err)
+			return nil, errorhandle.Wrap(errorhandle.KindInternal, "AEWIKI_BUDDY_INFO_FAILED", "GetBuddyInfoFromAEWiki", err)
 		}
 		info.PartnerLink = getRedirectURL(partnerDoc, partnerURL)
 	} else {

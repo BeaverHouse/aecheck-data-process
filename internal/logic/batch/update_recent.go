@@ -11,6 +11,7 @@ import (
 	"aecheck-data-process/internal/logic/database"
 	"aecheck-data-process/internal/logic/parse"
 
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/BeaverHouse/go-common/logger"
 )
 
@@ -50,7 +51,7 @@ func UpdateRecent(dbService *database.Service) error {
 					logger.Field{Key: "name", Value: link.Text},
 					logger.Field{Key: "error", Value: err},
 				)
-				failures = append(failures, fmt.Errorf("%s %q: %w", processor.label, link.Text, err))
+				failures = append(failures, errorhandle.Wrap(errorhandle.KindInternal, "RECENT_PREPARE_FAILED", fmt.Sprintf("%s %q", processor.label, link.Text), err))
 				continue
 			}
 			task.name = link.Text
@@ -63,12 +64,12 @@ func UpdateRecent(dbService *database.Service) error {
 					logger.Field{Key: "name", Value: task.name},
 					logger.Field{Key: "error", Value: err},
 				)
-				failures = append(failures, fmt.Errorf("%s %q: %w", task.label, task.name, err))
+				failures = append(failures, errorhandle.Wrap(errorhandle.KindInternal, "RECENT_UPDATE_FAILED", fmt.Sprintf("%s %q", task.label, task.name), err))
 			}
 		}
 	}
 	if len(failures) > 0 {
-		return fmt.Errorf("recent update completed with failures: %w", errors.Join(failures...))
+		return errorhandle.Wrap(errorhandle.KindInternal, "RECENT_UPDATE_INCOMPLETE", "recent update completed with failures", errors.Join(failures...))
 	}
 	return nil
 }
@@ -115,7 +116,7 @@ func prepareRecentBuddy(url string, dbService *database.Service) (task *recentUp
 func captureRecentPanic(run func()) (err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("panic: %v", recovered)
+			err = errorhandle.New(errorhandle.KindInternal, "RECENT_UPDATE_PANIC", fmt.Sprintf("panic: %v", recovered))
 		}
 	}()
 	run()

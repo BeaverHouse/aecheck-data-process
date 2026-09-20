@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/BeaverHouse/go-common/conv"
 	"github.com/BeaverHouse/go-common/logger"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -15,13 +16,13 @@ import (
 // resolvePartnerID resolves the partner character ID from the wiki link, returning an invalid pgtype.Text if not found.
 func (s *Service) resolvePartnerID(ctx context.Context, partnerLink string) pgtype.Text {
 	if partnerLink == "" || partnerLink == "None" {
-		return pgtype.Text{Valid: false}
+		return conv.ToPgText(nil)
 	}
-	partnerID, err := s.queries.GetCharacterIDByWikiURL(ctx, pgtype.Text{String: partnerLink, Valid: true})
+	partnerID, err := s.queries.GetCharacterIDByWikiURL(ctx, conv.ToPgText(&partnerLink))
 	if err != nil {
-		return pgtype.Text{Valid: false}
+		return conv.ToPgText(nil)
 	}
-	return pgtype.Text{String: partnerID, Valid: true}
+	return conv.ToPgText(&partnerID)
 }
 
 // CompareBuddy compares buddy info from wiki with database
@@ -78,7 +79,7 @@ func (s *Service) CompareBuddy(info types.BuddyInfoFromAEWiki, buddyID string, s
 // ResolveBuddyID returns existing buddy_id by wiki URL, or generates a new one.
 func (s *Service) ResolveBuddyID(wikiURL string) string {
 	ctx := context.Background()
-	existingID, err := s.queries.GetBuddyIDByWikiURL(ctx, pgtype.Text{String: wikiURL, Valid: true})
+	existingID, err := s.queries.GetBuddyIDByWikiURL(ctx, conv.ToPgText(&wikiURL))
 	if err == nil {
 		return existingID
 	}
@@ -110,7 +111,11 @@ func (s *Service) UpsertBuddy(info types.BuddyInfoFromAEWiki, buddyID string, se
 		panic(err)
 	}
 
-	seesaaText := pgtype.Text{String: seesaaURL, Valid: seesaaURL != ""}
+	seesaaText := conv.ToPgText(nil)
+	if seesaaURL != "" {
+		seesaaText = conv.ToPgText(&seesaaURL)
+	}
+	unknownGetPath := "Unknown"
 
 	if exists {
 		common.Log.Info("Buddy already exists", logger.Field{Key: "buddyID", Value: buddyID})
@@ -118,14 +123,14 @@ func (s *Service) UpsertBuddy(info types.BuddyInfoFromAEWiki, buddyID string, se
 			err = s.queries.UpdateBuddyWithCharacter(ctx, postgres.UpdateBuddyWithCharacterParams{
 				BuddyID:     buddyID,
 				CharacterID: calculatedPartnerID,
-				AewikiUrl:   pgtype.Text{String: info.WikiURL, Valid: true},
+				AewikiUrl:   conv.ToPgText(&info.WikiURL),
 				SeesaaUrl:   seesaaText,
 			})
 		} else {
 			err = s.queries.UpdateBuddyWithGetPath(ctx, postgres.UpdateBuddyWithGetPathParams{
 				BuddyID:   buddyID,
-				GetPath:   pgtype.Text{String: "Unknown", Valid: true},
-				AewikiUrl: pgtype.Text{String: info.WikiURL, Valid: true},
+				GetPath:   conv.ToPgText(&unknownGetPath),
+				AewikiUrl: conv.ToPgText(&info.WikiURL),
 				SeesaaUrl: seesaaText,
 			})
 		}
@@ -134,14 +139,14 @@ func (s *Service) UpsertBuddy(info types.BuddyInfoFromAEWiki, buddyID string, se
 			err = s.queries.InsertBuddyWithCharacter(ctx, postgres.InsertBuddyWithCharacterParams{
 				BuddyID:     buddyID,
 				CharacterID: calculatedPartnerID,
-				AewikiUrl:   pgtype.Text{String: info.WikiURL, Valid: true},
+				AewikiUrl:   conv.ToPgText(&info.WikiURL),
 				SeesaaUrl:   seesaaText,
 			})
 		} else {
 			err = s.queries.InsertBuddyWithGetPath(ctx, postgres.InsertBuddyWithGetPathParams{
 				BuddyID:   buddyID,
-				GetPath:   pgtype.Text{String: "Unknown", Valid: true},
-				AewikiUrl: pgtype.Text{String: info.WikiURL, Valid: true},
+				GetPath:   conv.ToPgText(&unknownGetPath),
+				AewikiUrl: conv.ToPgText(&info.WikiURL),
 				SeesaaUrl: seesaaText,
 			})
 		}

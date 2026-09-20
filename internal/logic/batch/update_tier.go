@@ -11,8 +11,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/BeaverHouse/go-common/conv"
 	"github.com/BeaverHouse/go-common/logger"
-	"github.com/jackc/pgx/v5/pgtype"
+)
+
+// Tier names stored on a character row; addressable so conv.ToPgText can take them.
+var (
+	superOPTier = "super_op"
+	opTier      = "op"
 )
 
 // TierCharacter represents a character from tier list
@@ -143,7 +149,7 @@ func UpdateTierFromJSON(jsonPath string, dbService *database.Service, dryrun boo
 	// Update Super OP
 	common.Log.Info("Super OP 업데이트 중...")
 	for _, c := range superOP {
-		if err := dbService.UpdateCharacterTier(ctx, c.CharacterID, pgtype.Text{String: "super_op", Valid: true}); err != nil {
+		if err := dbService.UpdateCharacterTier(ctx, c.CharacterID, conv.ToPgText(&superOPTier)); err != nil {
 			common.Log.Error("Error updating tier", logger.Field{Key: "name", Value: c.KoreanName}, logger.Field{Key: "error", Value: err})
 		} else {
 			common.Log.Info("Updated tier", logger.Field{Key: "name", Value: c.KoreanName}, logger.Field{Key: "tier", Value: "super_op"})
@@ -153,7 +159,7 @@ func UpdateTierFromJSON(jsonPath string, dbService *database.Service, dryrun boo
 	// Update OP
 	common.Log.Info("OP 업데이트 중...")
 	for _, c := range op {
-		if err := dbService.UpdateCharacterTier(ctx, c.CharacterID, pgtype.Text{String: "op", Valid: true}); err != nil {
+		if err := dbService.UpdateCharacterTier(ctx, c.CharacterID, conv.ToPgText(&opTier)); err != nil {
 			common.Log.Error("Error updating tier", logger.Field{Key: "name", Value: c.KoreanName}, logger.Field{Key: "error", Value: err})
 		} else {
 			common.Log.Info("Updated tier", logger.Field{Key: "name", Value: c.KoreanName}, logger.Field{Key: "tier", Value: "op"})
