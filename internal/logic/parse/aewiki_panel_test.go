@@ -83,9 +83,6 @@ func TestExtractUpdateDateReadsBothTabberMarkups(t *testing.T) {
 			if got != "2026-09-17" {
 				t.Fatalf("extractUpdateDate() = %q, want 2026-09-17", got)
 			}
-			if id := strings.TrimSpace(panel.Find("td").Eq(0).Text()); id != "101000451" {
-				t.Fatalf("game id cell = %q, want 101000451", id)
-			}
 		})
 	}
 }

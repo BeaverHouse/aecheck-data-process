@@ -56,10 +56,17 @@ func findSpoilerTranslation(englishName string, code string, dbService *database
 
 func promptID(englishName, englishClassName string) int {
 	common.Log.Warn("No DB entry found", logger.Field{Key: "name", Value: englishName}, logger.Field{Key: "class", Value: englishClassName})
-	fmt.Print("Enter numeric ID: ")
-	var input string
-	fmt.Fscanln(os.Stdin, &input)
-	id, err := strconv.Atoi(strings.TrimSpace(input))
+	reader := bufio.NewReader(os.Stdin)
+	input := ""
+	for input == "" {
+		fmt.Print("Enter numeric ID: ")
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			panic(fmt.Sprintf("read ID input: %v", err))
+		}
+		input = strings.TrimSpace(line)
+	}
+	id, err := strconv.Atoi(input)
 	if err != nil {
 		panic(fmt.Sprintf("invalid ID input: %s", input))
 	}
