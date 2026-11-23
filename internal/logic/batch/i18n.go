@@ -7,9 +7,7 @@ import (
 	"aecheck-data-process/internal/types"
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -62,7 +60,8 @@ func promptID(englishName, englishClassName string) int {
 	for {
 		fmt.Print("Enter numeric ID: ")
 		_, err := fmt.Fscanln(os.Stdin, &input)
-		if input != "" || errors.Is(err, io.EOF) {
+		// fmt reports a blank line only through this message; any other result ends the prompt.
+		if err == nil || err.Error() != "unexpected newline" {
 			break
 		}
 	}
