@@ -4,8 +4,8 @@ import (
 	"aecheck-data-process/internal/logic/batch"
 	"aecheck-data-process/internal/logic/common"
 	"context"
-	"fmt"
 
+	"github.com/BeaverHouse/go-common/errorhandle"
 	"github.com/BeaverHouse/go-common/logger"
 	"github.com/spf13/cobra"
 )
@@ -18,10 +18,10 @@ var updateBuddyCmd = &cobra.Command{
 		random, _ := cmd.Flags().GetBool("random")
 
 		if random && url != "" {
-			return fmt.Errorf("--random and --url are mutually exclusive")
+			return errorhandle.New(errorhandle.KindInvalid, "FLAG_CONFLICT", "--random and --url are mutually exclusive")
 		}
 		if !random && url == "" {
-			return fmt.Errorf("--url is required (or use --random)")
+			return errorhandle.New(errorhandle.KindInvalid, "FLAG_MISSING", "--url is required (or use --random)")
 		}
 
 		dbService, closeDB := bootstrapDB()
@@ -30,7 +30,7 @@ var updateBuddyCmd = &cobra.Command{
 		if random {
 			randomURL, err := dbService.GetRandomBuddyWikiURL(context.Background())
 			if err != nil {
-				return fmt.Errorf("failed to pick random buddy: %w", err)
+				return errorhandle.Wrap(errorhandle.KindInternal, "RANDOM_BUDDY_PICK_FAILED", "failed to pick random buddy", err)
 			}
 			url = randomURL
 			common.Log.Info("Random buddy selected", logger.Field{Key: "url", Value: url})

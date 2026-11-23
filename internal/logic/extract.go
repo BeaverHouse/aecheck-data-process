@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/BeaverHouse/go-common/errorhandle"
 )
 
 var dateFormats = []string{
@@ -25,7 +27,7 @@ var datePatterns = []*regexp.Regexp{
 func ExtractDate(rawString string) (string, error) {
 	candidates := extractDateCandidates(rawString)
 	if len(candidates) == 0 {
-		return "", fmt.Errorf("cannot parse update date: empty input")
+		return "", errorhandle.New(errorhandle.KindInvalid, "UPDATE_DATE_EMPTY", "cannot parse update date: empty input")
 	}
 
 	for _, candidate := range candidates {
@@ -37,7 +39,7 @@ func ExtractDate(rawString string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("cannot parse update date: %s", strings.TrimSpace(rawString))
+	return "", errorhandle.New(errorhandle.KindInvalid, "UPDATE_DATE_UNPARSEABLE", fmt.Sprintf("cannot parse update date: %s", strings.TrimSpace(rawString)))
 }
 
 func extractDateCandidates(rawString string) []string {

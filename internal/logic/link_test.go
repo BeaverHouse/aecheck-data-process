@@ -40,3 +40,56 @@ func TestFindSeesaaLink(t *testing.T) {
 		})
 	}
 }
+
+func TestFindAlterLink(t *testing.T) {
+	tests := []struct {
+		name     string
+		info     types.CharacterInfoFromAEWiki
+		expected string
+	}{
+		{
+			name: "base NS returns alter candidate",
+			info: types.CharacterInfoFromAEWiki{
+				CharacterInfoFromAEWikiURL: types.CharacterInfoFromAEWikiURL{Style: types.StyleNS},
+				WikiURL:                    "https://anothereden.wiki/w/Dewey",
+			},
+			expected: "https://anothereden.wiki/w/Dewey_(Alter)",
+		},
+		{
+			name: "alter NS returns base URL",
+			info: types.CharacterInfoFromAEWiki{
+				CharacterInfoFromAEWikiURL: types.CharacterInfoFromAEWikiURL{Style: types.StyleNS, IsAlter: true},
+				WikiURL:                    "https://anothereden.wiki/w/Dewey_(Alter)",
+			},
+			expected: "https://anothereden.wiki/w/Dewey",
+		},
+		{
+			name: "spoiler alias alter returns true-name base URL",
+			info: types.CharacterInfoFromAEWiki{
+				CharacterInfoFromAEWikiURL: types.CharacterInfoFromAEWikiURL{
+					Style:              types.StyleNS,
+					IsAlter:            true,
+					SpoilerEnglishName: "Dewey (Alter)",
+				},
+				WikiURL: "https://anothereden.wiki/w/Red_Clad_Flam.",
+			},
+			expected: "https://anothereden.wiki/w/Dewey",
+		},
+		{
+			name: "non-NS has no alter relation",
+			info: types.CharacterInfoFromAEWiki{
+				CharacterInfoFromAEWikiURL: types.CharacterInfoFromAEWikiURL{Style: types.StyleAS},
+				WikiURL:                    "https://anothereden.wiki/w/Dewey_(Another_Style)",
+			},
+			expected: "None",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FindAlterLink(tt.info); got != tt.expected {
+				t.Fatalf("FindAlterLink() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}

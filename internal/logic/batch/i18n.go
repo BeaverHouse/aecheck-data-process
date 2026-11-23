@@ -56,10 +56,16 @@ func findSpoilerTranslation(englishName string, code string, dbService *database
 
 func promptID(englishName, englishClassName string) int {
 	common.Log.Warn("No DB entry found", logger.Field{Key: "name", Value: englishName}, logger.Field{Key: "class", Value: englishClassName})
-	fmt.Print("Enter numeric ID: ")
 	var input string
-	fmt.Fscan(os.Stdin, &input)
-	id, err := strconv.Atoi(strings.TrimSpace(input))
+	for {
+		fmt.Print("Enter numeric ID: ")
+		_, err := fmt.Fscanln(os.Stdin, &input)
+		// fmt reports a blank line only through this message; any other result ends the prompt.
+		if err == nil || err.Error() != "unexpected newline" {
+			break
+		}
+	}
+	id, err := strconv.Atoi(input)
 	if err != nil {
 		panic(fmt.Sprintf("invalid ID input: %s", input))
 	}
