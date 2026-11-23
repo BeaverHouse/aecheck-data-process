@@ -7,7 +7,9 @@ import (
 	"aecheck-data-process/internal/types"
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -56,15 +58,13 @@ func findSpoilerTranslation(englishName string, code string, dbService *database
 
 func promptID(englishName, englishClassName string) int {
 	common.Log.Warn("No DB entry found", logger.Field{Key: "name", Value: englishName}, logger.Field{Key: "class", Value: englishClassName})
-	reader := bufio.NewReader(os.Stdin)
-	input := ""
-	for input == "" {
+	var input string
+	for {
 		fmt.Print("Enter numeric ID: ")
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			panic(fmt.Sprintf("read ID input: %v", err))
+		_, err := fmt.Fscanln(os.Stdin, &input)
+		if input != "" || errors.Is(err, io.EOF) {
+			break
 		}
-		input = strings.TrimSpace(line)
 	}
 	id, err := strconv.Atoi(input)
 	if err != nil {
