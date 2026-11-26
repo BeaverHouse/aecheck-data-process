@@ -49,7 +49,12 @@ func Export(ctx context.Context, dir string, dryRun bool) error {
 		return errorhandle.ErrInternal(err)
 	}
 	for _, table := range tables {
-		file, err := os.Create(filepath.Join(dir, table+".csv"))
+		path := filepath.Join(dir, table+".csv")
+		// A link left under this name would send the data wherever it points.
+		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return errorhandle.ErrInternal(err)
+		}
+		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 		if err != nil {
 			return errorhandle.ErrInternal(err)
 		}
