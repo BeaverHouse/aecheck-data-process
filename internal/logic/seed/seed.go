@@ -5,7 +5,9 @@ import (
 	"aecheck-data-process/internal/logic/common"
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -174,20 +176,39 @@ func copyStatement(dir, table string) (string, error) {
 }
 
 // refuseRepoDir keeps production dumps out of the working tree, where the CLI
-// runs from.
+// runs from. A link or junction outside the repository can lead into it, so
+// the directory is followed to where it really is and its parents are compared
+// with the root.
 func refuseRepoDir(dir string) error {
-	root, err := os.Getwd()
+	root, err := os.Stat(".")
 	if err != nil {
 		return errorhandle.ErrInternal(err)
 	}
-	abs, err := filepath.Abs(dir)
+	// A directory that does not exist yet is created under its nearest parent that does.
+	existing, err := filepath.Abs(dir)
 	if err != nil {
 		return errorhandle.ErrInternal(err)
 	}
-	rel, err := filepath.Rel(root, abs)
-	if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return errorhandle.New(errorhandle.KindInvalid, "SEED_DIR_IN_REPO",
-			fmt.Sprintf("%s is inside the repository; choose a directory outside it", dir))
+	target, err := realPath(existing)
+	for errors.Is(err, fs.ErrNotExist) && existing != filepath.Dir(existing) {
+		existing = filepath.Dir(existing)
+		target, err = realPath(existing)
 	}
-	return nil
+	if err != nil {
+		return errorhandle.ErrInternal(err)
+	}
+	// Directories are compared, not their names: a volume that ignores case
+	// spells one directory many ways. A parent that cannot be read is not the
+	// root, which was read.
+	for {
+		if info, err := os.Stat(target); err == nil && os.SameFile(info, root) {
+			return errorhandle.New(errorhandle.KindInvalid, "SEED_DIR_IN_REPO",
+				fmt.Sprintf("%s is inside the repository; choose a directory outside it", dir))
+		}
+		parent := filepath.Dir(target)
+		if parent == target {
+			return nil
+		}
+		target = parent
+	}
 }
