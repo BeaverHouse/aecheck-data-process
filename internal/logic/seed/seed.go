@@ -63,13 +63,44 @@ func Export(ctx context.Context, dir string, dryRun bool) error {
 	return nil
 }
 
+// Reset drops the aecheck schema of the local test database and rebuilds it
+// empty from this repository's schema file.
+func Reset(ctx context.Context, dryRun bool) error {
+	host, err := localHost()
+	if err != nil {
+		return err
+	}
+	if dryRun {
+		fmt.Println("Target host:", host)
+		fmt.Println(postgres.ResetSQL)
+		return nil
+	}
+
+	pool := gopostgres.InitFromEnv()
+	defer pool.Close()
+	if err := postgres.ResetSchema(ctx, pool); err != nil {
+		return errorhandle.ErrDBOperation("reset schema", err)
+	}
+	common.Log.Info("Rebuilt the aecheck schema")
+	return nil
+}
+
+// localHost refuses any database but a local one, since these commands erase.
+func localHost() (string, error) {
+	host := env.GetEnv("POSTGRES_HOST", "")
+	if host != "127.0.0.1" && host != "localhost" {
+		return "", errorhandle.New(errorhandle.KindInvalid, "SEED_TARGET_NOT_LOCAL",
+			fmt.Sprintf("seed-test writes only to a local database, not %q", host))
+	}
+	return host, nil
+}
+
 // Import replaces the tables in the local test database with the files Export
 // wrote, in one transaction.
 func Import(ctx context.Context, dir string, dryRun bool) error {
-	host := env.GetEnv("POSTGRES_HOST", "")
-	if host != "127.0.0.1" && host != "localhost" {
-		return errorhandle.New(errorhandle.KindInvalid, "SEED_TARGET_NOT_LOCAL",
-			fmt.Sprintf("seed import writes only to a local database, not %q", host))
+	host, err := localHost()
+	if err != nil {
+		return err
 	}
 	if err := refuseRepoDir(dir); err != nil {
 		return err

@@ -289,9 +289,9 @@ LIMIT 1
 `
 
 type GetFirstCharacterByCodeRow struct {
-	CharacterID string           `json:"character_id"`
-	Style       string           `json:"style"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	CharacterID string             `json:"character_id"`
+	Style       string             `json:"style"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetFirstCharacterByCode(ctx context.Context, characterCode string) (GetFirstCharacterByCodeRow, error) {

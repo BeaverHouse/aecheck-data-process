@@ -22,6 +22,17 @@ var seedExportCmd = &cobra.Command{
 	},
 }
 
+var seedResetCmd = &cobra.Command{
+	Use:          "reset",
+	Short:        "Drop the aecheck schema of the local test database and rebuild it empty",
+	Args:         cobra.NoArgs,
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		return seed.Reset(cmd.Context(), dryRun)
+	},
+}
+
 var seedImportCmd = &cobra.Command{
 	Use:          "import <dir>",
 	Short:        "Replace the aecheck tables in the local test database with exported files",
@@ -35,6 +46,6 @@ var seedImportCmd = &cobra.Command{
 
 func init() {
 	seedCmd.PersistentFlags().Bool("dry-run", false, "Print the plan without connecting or writing")
-	seedCmd.AddCommand(seedExportCmd, seedImportCmd)
+	seedCmd.AddCommand(seedResetCmd, seedExportCmd, seedImportCmd)
 	rootCmd.AddCommand(seedCmd)
 }
