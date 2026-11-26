@@ -49,12 +49,9 @@ func Export(ctx context.Context, dir string, dryRun bool) error {
 		return errorhandle.ErrInternal(err)
 	}
 	for _, table := range tables {
-		path := filepath.Join(dir, table+".csv")
-		// A link left under this name would send the data wherever it points.
-		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return errorhandle.ErrInternal(err)
-		}
-		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+		// Written under a new name and renamed into place, so a link already
+		// under the final name is replaced, never written through.
+		file, err := os.CreateTemp(dir, table+".*.csv")
 		if err != nil {
 			return errorhandle.ErrInternal(err)
 		}
@@ -62,7 +59,11 @@ func Export(ctx context.Context, dir string, dryRun bool) error {
 		if closeErr := file.Close(); err == nil {
 			err = closeErr
 		}
+		if err == nil {
+			err = os.Rename(file.Name(), filepath.Join(dir, table+".csv"))
+		}
 		if err != nil {
+			os.Remove(file.Name()) //nolint:errcheck // the export has already failed
 			return errorhandle.ErrDBOperation("export "+table, err)
 		}
 	}
