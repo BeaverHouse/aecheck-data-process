@@ -40,6 +40,7 @@ type Querier interface {
 	InsertBuddyWithGetPath(ctx context.Context, arg InsertBuddyWithGetPathParams) error
 	InsertCharacter(ctx context.Context, arg InsertCharacterParams) error
 	InsertTranslation(ctx context.Context, arg InsertTranslationParams) error
+	TruncateSeedTables(ctx context.Context) error
 	UpdateBuddyWithCharacter(ctx context.Context, arg UpdateBuddyWithCharacterParams) error
 	UpdateBuddyWithGetPath(ctx context.Context, arg UpdateBuddyWithGetPathParams) error
 	UpdateCharacter(ctx context.Context, arg UpdateCharacterParams) error

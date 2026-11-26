@@ -70,6 +70,13 @@ Used [Cobra](https://github.com/spf13/cobra) for CLI framework.
   So this CLI is semi-automatic; when a wiki URL is requested, a browser window opens; solve the Cloudflare
   challenge manually, then press Enter in the terminal to continue.
 
+## Local test data
+
+service-api's `setup-test-env --scope aecheck` rebuilds the local `aecheck` schema with empty tables.
+`seed-test export <dir>` dumps its four tables from production to CSV files in `<dir>`,
+and `seed-test import <dir>` loads them into the local test database.
+Both accept `--dry-run` to print the plan without writing anything.
+
 ## Documentation
 
 - [Database tables](./docs/db-table.md)
