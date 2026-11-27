@@ -70,6 +70,17 @@ Used [Cobra](https://github.com/spf13/cobra) for CLI framework.
   So this CLI is semi-automatic; when a wiki URL is requested, a browser window opens; solve the Cloudflare
   challenge manually, then press Enter in the terminal to continue.
 
+## Local test data
+
+This repository owns the `aecheck` schema: `internal/db/postgres/sql/schema/schema.sql` is the only
+file that defines it, and a repository that reads the tables keeps a copy of the columns it uses in
+its `schema_external_stubs.sql`.
+
+`seed-test reset` drops the local `aecheck` schema and rebuilds it empty from that file.
+`seed-test export <dir>` dumps its four tables from production to CSV files in `<dir>`,
+and `seed-test import <dir>` loads them into the local test database.
+All three accept `--dry-run` to print the plan without writing anything.
+
 ## Documentation
 
 - [Database tables](./docs/db-table.md)

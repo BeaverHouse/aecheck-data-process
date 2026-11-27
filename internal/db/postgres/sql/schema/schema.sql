@@ -20,14 +20,14 @@ CREATE TABLE IF NOT EXISTS aecheck.characters (
     seesaa_url VARCHAR(500) NULL,
     aewiki_url VARCHAR(500) NULL,
     update_date DATE NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NULL,
-    deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ NULL,
+    deleted_at TIMESTAMPTZ NULL,
     custom_manifest BOOL DEFAULT false NULL,
     personalities_data JSONB DEFAULT '[]'::jsonb NULL,
     dungeons_data JSONB DEFAULT '[]'::jsonb NULL,
     buddy_data JSONB DEFAULT NULL,
-    tier VARCHAR(10) NULL,
+    tier VARCHAR(20) NULL,
     CONSTRAINT ae_character_pk PRIMARY KEY (character_id)
 );
 
@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS aecheck.buddies (
     get_path VARCHAR(20) NULL,
     seesaa_url VARCHAR(500) NULL,
     aewiki_url VARCHAR(500) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NULL,
-    deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ NULL,
+    deleted_at TIMESTAMPTZ NULL,
     CONSTRAINT ae_buddy_pk PRIMARY KEY (buddy_id)
 );
 
@@ -49,9 +49,9 @@ CREATE TABLE IF NOT EXISTS aecheck.dungeons (
     dungeon_id VARCHAR(20) NOT NULL,
     altema_url VARCHAR(500) NULL,
     aewiki_url VARCHAR(500) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NULL,
-    deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ NULL,
+    deleted_at TIMESTAMPTZ NULL,
     CONSTRAINT ae_dungeon_pk PRIMARY KEY (dungeon_id)
 );
 
@@ -61,9 +61,9 @@ CREATE TABLE IF NOT EXISTS aecheck.translations (
     ko VARCHAR(500) NOT NULL,
     en VARCHAR(500) NOT NULL,
     ja VARCHAR(500) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NULL,
-    deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ NULL,
+    deleted_at TIMESTAMPTZ NULL,
     CONSTRAINT ae_i18n_pk PRIMARY KEY (key)
 );
 
@@ -78,3 +78,12 @@ CREATE INDEX IF NOT EXISTS idx_characters_alter_character ON aecheck.characters(
 -- Note: No indexes on JSONB columns needed
 -- GIN indexes are only useful when querying inside JSONB (e.g., WHERE personalities_data @> ...)
 -- Our queries only SELECT these columns for unmarshaling, so indexes provide no benefit
+
+ALTER TABLE aecheck.characters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.buddies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.dungeons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.translations ENABLE ROW LEVEL SECURITY;
+
+COMMENT ON COLUMN aecheck.characters.buddy_data IS 'JSONB object of buddy information: {"buddy_id": "buddy001", "character_id": "char001", "get_path": "..."}';
+COMMENT ON COLUMN aecheck.characters.dungeons_data IS 'JSONB array of dungeon mappings: [{"id": "dungeon001", "description": "...", "links": {...}}]';
+COMMENT ON COLUMN aecheck.characters.personalities_data IS 'JSONB array of personality mappings: [{"id": "personality001", "description": "..."}]';

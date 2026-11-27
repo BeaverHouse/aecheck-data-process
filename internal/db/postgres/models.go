@@ -9,54 +9,57 @@ import (
 )
 
 type AecheckBuddy struct {
-	BuddyID     string           `json:"buddy_id"`
-	CharacterID pgtype.Text      `json:"character_id"`
-	GetPath     pgtype.Text      `json:"get_path"`
-	SeesaaUrl   pgtype.Text      `json:"seesaa_url"`
-	AewikiUrl   pgtype.Text      `json:"aewiki_url"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	DeletedAt   pgtype.Timestamp `json:"deleted_at"`
+	BuddyID     string             `json:"buddy_id"`
+	CharacterID pgtype.Text        `json:"character_id"`
+	GetPath     pgtype.Text        `json:"get_path"`
+	SeesaaUrl   pgtype.Text        `json:"seesaa_url"`
+	AewikiUrl   pgtype.Text        `json:"aewiki_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type AecheckCharacter struct {
-	CharacterID       string           `json:"character_id"`
-	CharacterCode     string           `json:"character_code"`
-	Category          string           `json:"category"`
-	Style             string           `json:"style"`
-	LightShadow       string           `json:"light_shadow"`
-	MaxManifest       int32            `json:"max_manifest"`
-	IsAwaken          bool             `json:"is_awaken"`
-	IsAlter           bool             `json:"is_alter"`
-	AlterCharacter    pgtype.Text      `json:"alter_character"`
-	SeesaaUrl         pgtype.Text      `json:"seesaa_url"`
-	AewikiUrl         pgtype.Text      `json:"aewiki_url"`
-	UpdateDate        pgtype.Date      `json:"update_date"`
-	CreatedAt         pgtype.Timestamp `json:"created_at"`
-	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
-	DeletedAt         pgtype.Timestamp `json:"deleted_at"`
-	CustomManifest    pgtype.Bool      `json:"custom_manifest"`
-	PersonalitiesData []byte           `json:"personalities_data"`
-	DungeonsData      []byte           `json:"dungeons_data"`
-	BuddyData         []byte           `json:"buddy_data"`
-	Tier              pgtype.Text      `json:"tier"`
+	CharacterID    string             `json:"character_id"`
+	CharacterCode  string             `json:"character_code"`
+	Category       string             `json:"category"`
+	Style          string             `json:"style"`
+	LightShadow    string             `json:"light_shadow"`
+	MaxManifest    int32              `json:"max_manifest"`
+	IsAwaken       bool               `json:"is_awaken"`
+	IsAlter        bool               `json:"is_alter"`
+	AlterCharacter pgtype.Text        `json:"alter_character"`
+	SeesaaUrl      pgtype.Text        `json:"seesaa_url"`
+	AewikiUrl      pgtype.Text        `json:"aewiki_url"`
+	UpdateDate     pgtype.Date        `json:"update_date"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	CustomManifest pgtype.Bool        `json:"custom_manifest"`
+	// JSONB array of personality mappings: [{"id": "personality001", "description": "..."}]
+	PersonalitiesData []byte `json:"personalities_data"`
+	// JSONB array of dungeon mappings: [{"id": "dungeon001", "description": "...", "links": {...}}]
+	DungeonsData []byte `json:"dungeons_data"`
+	// JSONB object of buddy information: {"buddy_id": "buddy001", "character_id": "char001", "get_path": "..."}
+	BuddyData []byte      `json:"buddy_data"`
+	Tier      pgtype.Text `json:"tier"`
 }
 
 type AecheckDungeon struct {
-	DungeonID string           `json:"dungeon_id"`
-	AltemaUrl pgtype.Text      `json:"altema_url"`
-	AewikiUrl pgtype.Text      `json:"aewiki_url"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	DeletedAt pgtype.Timestamp `json:"deleted_at"`
+	DungeonID string             `json:"dungeon_id"`
+	AltemaUrl pgtype.Text        `json:"altema_url"`
+	AewikiUrl pgtype.Text        `json:"aewiki_url"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type AecheckTranslation struct {
-	Key       string           `json:"key"`
-	Ko        string           `json:"ko"`
-	En        string           `json:"en"`
-	Ja        string           `json:"ja"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	DeletedAt pgtype.Timestamp `json:"deleted_at"`
+	Key       string             `json:"key"`
+	Ko        string             `json:"ko"`
+	En        string             `json:"en"`
+	Ja        string             `json:"ja"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
