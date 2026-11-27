@@ -40,6 +40,9 @@ type Querier interface {
 	InsertBuddyWithGetPath(ctx context.Context, arg InsertBuddyWithGetPathParams) error
 	InsertCharacter(ctx context.Context, arg InsertCharacterParams) error
 	InsertTranslation(ctx context.Context, arg InsertTranslationParams) error
+	// A fresh test database has no token for the AE Check web app, and the
+	// analyzer refuses its requests without one.
+	RegisterServiceToken(ctx context.Context, token string) error
 	TruncateSeedTables(ctx context.Context) error
 	UpdateBuddyWithCharacter(ctx context.Context, arg UpdateBuddyWithCharacterParams) error
 	UpdateBuddyWithGetPath(ctx context.Context, arg UpdateBuddyWithGetPathParams) error

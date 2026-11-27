@@ -9,6 +9,19 @@ import (
 	"context"
 )
 
+const registerServiceToken = `-- name: RegisterServiceToken :exec
+INSERT INTO tinyclover.service_tokens (name, token, scopes)
+VALUES ('e2e-aecheck', $1, '{aecheck,file}')
+ON CONFLICT (token) DO UPDATE SET scopes = EXCLUDED.scopes
+`
+
+// A fresh test database has no token for the AE Check web app, and the
+// analyzer refuses its requests without one.
+func (q *Queries) RegisterServiceToken(ctx context.Context, token string) error {
+	_, err := q.db.Exec(ctx, registerServiceToken, token)
+	return err
+}
+
 const truncateSeedTables = `-- name: TruncateSeedTables :exec
 TRUNCATE aecheck.characters, aecheck.buddies, aecheck.dungeons, aecheck.translations
 `
