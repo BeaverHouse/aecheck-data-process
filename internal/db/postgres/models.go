@@ -63,3 +63,9 @@ type AecheckTranslation struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
+
+type TinycloverServiceToken struct {
+	Name   string   `json:"name"`
+	Token  string   `json:"token"`
+	Scopes []string `json:"scopes"`
+}

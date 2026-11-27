@@ -134,7 +134,11 @@ func Import(ctx context.Context, dir string, dryRun bool) error {
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // a no-op once Commit succeeds
 
-	if err := postgres.New(tx).TruncateSeedTables(ctx); err != nil {
+	queries := postgres.New(tx)
+	if err := queries.RegisterServiceToken(ctx, env.GetEnv("AE_ANALYZER_SERVICE_TOKEN", "")); err != nil {
+		return errorhandle.ErrDBOperation("register service token", err)
+	}
+	if err := queries.TruncateSeedTables(ctx); err != nil {
 		return errorhandle.ErrDBOperation("truncate seed tables", err)
 	}
 	for _, table := range tables {
