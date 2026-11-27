@@ -79,6 +79,11 @@ CREATE INDEX IF NOT EXISTS idx_characters_alter_character ON aecheck.characters(
 -- GIN indexes are only useful when querying inside JSONB (e.g., WHERE personalities_data @> ...)
 -- Our queries only SELECT these columns for unmarshaling, so indexes provide no benefit
 
+ALTER TABLE aecheck.characters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.buddies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.dungeons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aecheck.translations ENABLE ROW LEVEL SECURITY;
+
 COMMENT ON COLUMN aecheck.characters.buddy_data IS 'JSONB object of buddy information: {"buddy_id": "buddy001", "character_id": "char001", "get_path": "..."}';
 COMMENT ON COLUMN aecheck.characters.dungeons_data IS 'JSONB array of dungeon mappings: [{"id": "dungeon001", "description": "...", "links": {...}}]';
 COMMENT ON COLUMN aecheck.characters.personalities_data IS 'JSONB array of personality mappings: [{"id": "personality001", "description": "..."}]';
